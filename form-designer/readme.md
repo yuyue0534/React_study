@@ -44,3 +44,14 @@ src/
   index.css
   main.tsx
 ```
+
+**创建项目**
+
+```
+# 使用 Vite 创建 React + TypeScript 项目
+npm create vite@latest form-designer -- --template react-ts
+# 安装tailwind v3版本
+npm install -D tailwindcss@3.4.1 postcss autoprefixer
+# 创建配置文件
+npx tailwindcss init -p
+```
