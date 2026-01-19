@@ -13,3 +13,34 @@
       - ✅ 预览模式：同一份 Schema 直接走渲染引擎 FormRenderer
       - ✅ 导入/导出 Schema JSON：顶栏一键打开 JSON 面板，可直接粘贴导入
       - ✅ Schema 校验：标题空、name 重复、options 为空、colSpan 越界等会提示
+
+**项目结构**
+```
+src/
+  app/
+    App.tsx
+  designer/
+    FormDesigner.tsx
+    components/
+      ComponentPalette.tsx
+      Canvas.tsx
+      FieldCard.tsx
+      PropertyEditor.tsx
+      TopBar.tsx
+  renderer/
+    FormRenderer.tsx
+    fieldRenderers.tsx
+  schema/
+    types.ts
+    defaults.ts
+    validators.ts
+  state/
+    designerReducer.ts
+    designerContext.tsx
+  utils/
+    id.ts
+    deepClone.ts
+    classnames.ts
+  index.css
+  main.tsx
+```
