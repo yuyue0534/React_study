@@ -102,7 +102,7 @@ export function PropertyEditor() {
     );
 
     return (
-        <div className="h-full border-l border-slate-200 bg-white p-3">
+        <div className="h-full min-h-0 overflow-y-auto border-l border-slate-200 bg-white p-3 pb-6">
             <div className="text-sm font-semibold text-slate-900 mb-3">属性面板</div>
 
             {/* 表单级属性（即使未选中字段也可编辑） */}

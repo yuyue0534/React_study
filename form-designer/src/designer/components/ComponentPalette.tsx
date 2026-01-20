@@ -33,7 +33,7 @@ export function ComponentPalette() {
     const { dispatch } = useDesigner();
 
     return (
-        <div className="h-full border-r border-slate-200 bg-white p-3">
+        <div className="h-full min-h-0 overflow-y-auto border-r border-slate-200 bg-white p-3 pb-6">
             <div className="text-sm font-semibold text-slate-900 mb-3">组件库</div>
 
             <div className="space-y-4">

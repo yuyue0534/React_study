@@ -8,7 +8,7 @@ export function Canvas() {
     const fields = state.schema.fields;
 
     return (
-        <div className="h-full bg-slate-50 p-4">
+        <div className="h-full min-h-0 overflow-y-auto bg-slate-50 p-4 pb-6">
             <div className="mb-3">
                 <div className="text-sm font-semibold text-slate-900">画布</div>
                 <div className="text-xs text-slate-500 mt-1">当前字段数：{fields.length}</div>
