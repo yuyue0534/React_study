@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "title": "后台 - 系统配置申请",
+  "description": "用于申请开通功能、调整权限、配置参数",
+  "rows": [
+    {
+      "id": "row_admin_1",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_admin_1a",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "a_app", "type": "select", "name": "target_system", "label": "目标系统", "required": true, "placeholder": "请选择",
+              "defaultValue": "",
+              "options": [
+                { "label": "OA", "value": "oa" },
+                { "label": "CRM", "value": "crm" },
+                { "label": "工单系统", "value": "ticket" },
+                { "label": "数据平台", "value": "data" }
+              ]
+            },
+            { "id": "a_env", "type": "radio", "name": "env", "label": "环境", "required": true, "defaultValue": "prod",
+              "options": [
+                { "label": "测试", "value": "test" },
+                { "label": "预发", "value": "staging" },
+                { "label": "生产", "value": "prod" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "col_admin_1b",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "a_owner", "type": "input", "name": "owner", "label": "责任人", "required": true, "placeholder": "如：张三", "defaultValue": "" },
+            { "id": "a_priority", "type": "select", "name": "priority", "label": "优先级", "required": true, "placeholder": "请选择",
+              "defaultValue": "p2",
+              "options": [
+                { "label": "P0", "value": "p0" },
+                { "label": "P1", "value": "p1" },
+                { "label": "P2", "value": "p2" },
+                { "label": "P3", "value": "p3" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "row_admin_2",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_admin_2a",
+          "type": "col",
+          "span": 12,
+          "children": [
+            { "id": "a_detail", "type": "textarea", "name": "change_detail", "label": "变更说明", "required": true, "placeholder": "描述要开通/修改的内容与原因", "defaultValue": "", "rows": 5 },
+            { "id": "a_risk", "type": "checkbox", "name": "risk_ack", "label": "我已确认变更风险", "required": true, "defaultValue": false }
+          ]
+        }
+      ]
+    }
+  ]
+}

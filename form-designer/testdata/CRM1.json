@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "title": "CRM - 线索收集表",
+  "description": "用于销售线索录入与跟进",
+  "rows": [
+    {
+      "id": "row_crm_1",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_crm_1a",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "f_crm_company", "type": "input", "name": "company", "label": "公司/组织", "required": true, "placeholder": "例如：某某科技", "defaultValue": "" },
+            { "id": "f_crm_contact", "type": "input", "name": "contact_name", "label": "联系人", "required": true, "placeholder": "姓名", "defaultValue": "" },
+            { "id": "f_crm_phone", "type": "input", "name": "phone", "label": "手机号", "required": true, "placeholder": "11位手机号", "defaultValue": "" }
+          ]
+        },
+        {
+          "id": "col_crm_1b",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "f_crm_source", "type": "select", "name": "lead_source", "label": "线索来源", "required": true, "placeholder": "请选择",
+              "defaultValue": "",
+              "options": [
+                { "label": "官网", "value": "website" },
+                { "label": "投放广告", "value": "ads" },
+                { "label": "展会", "value": "expo" },
+                { "label": "转介绍", "value": "referral" }
+              ]
+            },
+            { "id": "f_crm_stage", "type": "radio", "name": "stage", "label": "阶段", "required": true, "defaultValue": "new",
+              "options": [
+                { "label": "新线索", "value": "new" },
+                { "label": "已联系", "value": "contacted" },
+                { "label": "意向中", "value": "qualified" },
+                { "label": "已成交", "value": "won" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "row_crm_2",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_crm_2a",
+          "type": "col",
+          "span": 12,
+          "children": [
+            { "id": "f_crm_budget", "type": "number", "name": "budget", "label": "预算（万元）", "required": false, "placeholder": "例如：50", "defaultValue": 0, "min": 0, "step": 1 },
+            { "id": "f_crm_note", "type": "textarea", "name": "followup_note", "label": "跟进记录", "required": false, "placeholder": "写下沟通内容与下一步计划", "defaultValue": "", "rows": 4 }
+          ]
+        }
+      ]
+    }
+  ]
+}

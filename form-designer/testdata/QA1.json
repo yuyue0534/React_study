@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "title": "问卷 - 客服满意度调查",
+  "description": "用于收集用户满意度与反馈",
+  "rows": [
+    {
+      "id": "row_survey_1",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_survey_1a",
+          "type": "col",
+          "span": 12,
+          "children": [
+            { "id": "s_section", "type": "section", "name": "section_intro", "label": "", "title": "感谢参与", "description": "问卷大约 1 分钟完成" },
+            { "id": "s_rate", "type": "radio", "name": "satisfaction", "label": "整体满意度", "required": true, "defaultValue": "5",
+              "options": [
+                { "label": "1（很不满意）", "value": "1" },
+                { "label": "2", "value": "2" },
+                { "label": "3", "value": "3" },
+                { "label": "4", "value": "4" },
+                { "label": "5（非常满意）", "value": "5" }
+              ]
+            },
+            { "id": "s_resolve", "type": "checkbox", "name": "resolved", "label": "问题是否解决", "required": false, "defaultValue": true },
+            { "id": "s_comment", "type": "textarea", "name": "comment", "label": "建议与意见", "required": false, "placeholder": "欢迎写下你的建议", "defaultValue": "", "rows": 4 }
+          ]
+        }
+      ]
+    }
+  ]
+}

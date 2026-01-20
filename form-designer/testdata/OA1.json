@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "title": "OA - 请假/加班申请",
+  "description": "用于企业内部请假、加班与审批流入参",
+  "rows": [
+    {
+      "id": "row_oa_1",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_oa_1a",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "f_oa_name", "type": "input", "name": "employee_name", "label": "申请人姓名", "required": true, "placeholder": "请输入姓名", "defaultValue": "" },
+            { "id": "f_oa_dept", "type": "input", "name": "department", "label": "部门", "required": true, "placeholder": "如：技术部", "defaultValue": "" },
+            { "id": "f_oa_type", "type": "select", "name": "request_type", "label": "申请类型", "required": true, "placeholder": "请选择",
+              "defaultValue": "",
+              "options": [
+                { "label": "事假", "value": "leave_personal" },
+                { "label": "病假", "value": "leave_sick" },
+                { "label": "年假", "value": "leave_annual" },
+                { "label": "加班", "value": "overtime" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "col_oa_1b",
+          "type": "col",
+          "span": 6,
+          "children": [
+            { "id": "f_oa_start", "type": "date", "name": "start_date", "label": "开始日期", "required": true, "defaultValue": "" },
+            { "id": "f_oa_end", "type": "date", "name": "end_date", "label": "结束日期", "required": true, "defaultValue": "" },
+            { "id": "f_oa_urgent", "type": "checkbox", "name": "is_urgent", "label": "是否紧急", "required": false, "defaultValue": false }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "row_oa_2",
+      "type": "row",
+      "columns": [
+        {
+          "id": "col_oa_2a",
+          "type": "col",
+          "span": 12,
+          "children": [
+            { "id": "f_oa_reason", "type": "textarea", "name": "reason", "label": "原因说明", "required": true, "placeholder": "请填写原因与补充说明", "defaultValue": "", "rows": 4 },
+            { "id": "f_oa_div", "type": "divider", "name": "divider_oa_1", "label": "" },
+            { "id": "f_oa_note", "type": "section", "name": "section_oa_1", "label": "", "title": "审批提示", "description": "提交后将进入部门负责人审批流程" }
+          ]
+        }
+      ]
+    }
+  ]
+}

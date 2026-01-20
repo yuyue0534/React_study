@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 2,
+  "title": "未命名表单",
+  "description": "",
+  "rows": [
+    {
+      "id": "mkm7l36f_j1nederw",
+      "type": "row",
+      "columns": [
+        {
+          "id": "mkm7l36f_6nhd5lmk",
+          "type": "col",
+          "span": 6,
+          "children": [
+            {
+              "id": "mkm7l85a_pg6f1bzf",
+              "type": "input",
+              "name": "input_mkm7l8",
+              "label": "input1",
+              "required": false,
+              "disabled": false,
+              "placeholder": "请输入",
+              "defaultValue": ""
+            },
+            {
+              "id": "mkm7l9jf_byy4epzy",
+              "type": "number",
+              "name": "number_mkm7l9",
+              "label": "number1",
+              "required": false,
+              "disabled": false,
+              "placeholder": "请输入数字",
+              "defaultValue": 0,
+              "step": 1
+            },
+            {
+              "id": "mkm7la1r_zpccfzug",
+              "type": "date",
+              "name": "date_mkm7la",
+              "label": "date1",
+              "required": false,
+              "disabled": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
+          "id": "mkm7l36f_3j4lfm56",
+          "type": "col",
+          "span": 6,
+          "children": [
+            {
+              "id": "mkm7lbwv_9y1pjyn7",
+              "type": "number",
+              "name": "number_mkm7lb",
+              "label": "number2",
+              "required": false,
+              "disabled": false,
+              "placeholder": "请输入数字",
+              "defaultValue": 0,
+              "step": 1
+            },
+            {
+              "id": "mkm7lcbd_7ri62i8j",
+              "type": "date",
+              "name": "date_mkm7lc",
+              "label": "date2",
+              "required": false,
+              "disabled": false,
+              "defaultValue": ""
+            },
+            {
+              "id": "mkm7ld58_wiud6879",
+              "type": "select",
+              "name": "select_mkm7ld",
+              "label": "select1",
+              "required": false,
+              "disabled": false,
+              "placeholder": "请选择",
+              "defaultValue": "",
+              "options": [
+                {
+                  "label": "选项 1",
+                  "value": "opt1"
+                },
+                {
+                  "label": "选项 2",
+                  "value": "opt2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
