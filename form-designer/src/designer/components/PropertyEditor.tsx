@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useDesigner } from "../../state/designerContext";
 import type { OptionItem } from "../../schema/types";
 import { cn } from "../../utils/classnames";
+import { uid } from "../../utils/id";
+import { usePermissions } from "../../auth/RoleContext";
 
 function Input({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
     return (
@@ -96,75 +98,207 @@ function OptionsEditor({
 
 export function PropertyEditor() {
     const { state, dispatch } = useDesigner();
-    const selected = useMemo(
-        () => state.schema.fields.find((f) => f.id === state.selectedFieldId) ?? null,
-        [state.schema.fields, state.selectedFieldId]
-    );
+    const perms = usePermissions();
+    const schema = state.schema;
+
+    // 当前选中节点定位
+    const selectedRow = useMemo(() => {
+        if (state.selected.kind === "row" || state.selected.kind === "col" || state.selected.kind === "field") {
+            return schema.rows.find((r) => r.id === state.selected.rowId) ?? null;
+        }
+        return null;
+    }, [state.selected, schema.rows]);
+
+    const selectedCol = useMemo(() => {
+        if ((state.selected.kind === "col" || state.selected.kind === "field") && selectedRow) {
+            return selectedRow.columns.find((c) => c.id === state.selected.colId) ?? null;
+        }
+        return null;
+    }, [state.selected, selectedRow]);
+
+    const selectedField = useMemo(() => {
+        if (state.selected.kind === "field" && selectedCol) {
+            return selectedCol.children.find((f) => f.id === state.selected.fieldId) ?? null;
+        }
+        return null;
+    }, [state.selected, selectedCol]);
 
     return (
-        <div className="h-full min-h-0 overflow-y-auto border-l border-slate-200 bg-white p-3 pb-6">
+        <div className="h-full border-l border-slate-200 bg-white p-3 overflow-auto">
             <div className="text-sm font-semibold text-slate-900 mb-3">属性面板</div>
 
-            {/* 表单级属性（即使未选中字段也可编辑） */}
+            {/* 表单级属性 */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="text-xs font-semibold text-slate-600 mb-2">表单</div>
                 <div className="space-y-2">
                     <Input
                         label="标题"
-                        value={state.schema.title}
-                        onChange={(v) => dispatch({ type: "UPDATE_FORM", patch: { title: v } })}
+                        value={schema.title}
+                        onChange={(v) => perms.canEditProps && dispatch({ type: "UPDATE_FORM", patch: { title: v } })}
                     />
                     <Textarea
                         label="描述"
-                        value={state.schema.description || ""}
-                        onChange={(v) => dispatch({ type: "UPDATE_FORM", patch: { description: v } })}
+                        value={schema.description || ""}
+                        onChange={(v) => perms.canEditProps && dispatch({ type: "UPDATE_FORM", patch: { description: v } })}
                     />
                 </div>
             </div>
 
             <div className="my-3 border-t border-slate-200" />
 
-            {!selected ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                    选择画布中的字段以编辑属性
+            {/* Row 面板 */}
+            {state.selected.kind === "row" && selectedRow ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold text-slate-900">Row</div>
+                        <button
+                            className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
+                            onClick={() => dispatch({ type: "ADD_COL", rowId: selectedRow.id, col: { id: uid(), type: "col", span: 6, children: [] } })}
+                        >
+                            + 添加列
+                        </button>
+                    </div>
+                    <div className="text-xs text-slate-500">rowId: <span className="font-mono">{selectedRow.id}</span></div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-xs font-semibold text-slate-600 mb-2">列列表（可在列面板改 span）</div>
+                        <div className="space-y-2">
+                            {selectedRow.columns.map((c) => (
+                                <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
+                                    <div className="text-xs text-slate-700">
+                                        colId: <span className="font-mono">{c.id.slice(0, 8)}</span> · span={c.span} · fields={c.children.length}
+                                    </div>
+                                    <button
+                                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
+                                        onClick={() => dispatch({ type: "DELETE_COL", rowId: selectedRow.id, colId: c.id })}
+                                        disabled={selectedRow.columns.length <= 1}
+                                        title={selectedRow.columns.length <= 1 ? "至少保留 1 列" : "删除列"}
+                                    >
+                                        删除
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-2 text-[11px] text-slate-500">提示：同一行列宽总和建议 ≤ 12（校验会提示）</div>
+                    </div>
+
+                    <button
+                        className={cn(
+                            "w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700",
+                            "hover:bg-red-100"
+                        )}
+                        onClick={() => dispatch({ type: "DELETE_ROW", rowId: selectedRow.id })}
+                    >
+                        删除该行
+                    </button>
                 </div>
-            ) : (
+            ) : null}
+
+            {/* Col 面板 */}
+            {state.selected.kind === "col" && selectedRow && selectedCol ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
+                    <div className="text-sm font-semibold text-slate-900">Col</div>
+                    <div className="text-xs text-slate-500">
+                        rowId: <span className="font-mono">{selectedRow.id.slice(0, 8)}</span> · colId:{" "}
+                        <span className="font-mono">{selectedCol.id.slice(0, 8)}</span>
+                    </div>
+
+                    <label className="block">
+                        <div className="text-xs font-semibold text-slate-600 mb-1">span（1-12）</div>
+                        <input
+                            type="number"
+                            min={1}
+                            max={12}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+                            value={selectedCol.span}
+                            disabled={!perms.canLayout}
+                            onChange={(e) => perms.canLayout && dispatch({ type: "UPDATE_COL", rowId: selectedRow.id, colId: selectedCol.id, patch: { span: Number(e.target.value || 12) } })}
+                        />
+                    </label>
+
+                    <div className="text-xs text-slate-500">该列字段数：{selectedCol.children.length}</div>
+
+                    {perms.canLayout && perms.canDelete && (<button
+                        className={cn(
+                            "w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700",
+                            "hover:bg-red-100"
+                        )}
+                        onClick={() => dispatch({ type: "DELETE_COL", rowId: selectedRow.id, colId: selectedCol.id })}
+                        disabled={selectedRow.columns.length <= 1}
+                        title={selectedRow.columns.length <= 1 ? "至少保留 1 列" : "删除列"}
+                    >
+                        删除该列
+                    </button>)}
+                </div>
+            ) : null}
+
+            {/* Field 面板（沿用你原逻辑） */}
+            {state.selected.kind === "field" && selectedRow && selectedCol && selectedField ? (
                 <div className="space-y-3">
                     <div className="rounded-2xl border border-slate-200 bg-white p-3">
                         <div className="text-xs font-semibold text-slate-600 mb-2">字段</div>
                         <div className="space-y-2">
                             <div className="text-xs text-slate-500">
-                                id: <span className="font-mono">{selected.id}</span> / type:{" "}
-                                <span className="font-mono">{selected.type}</span>
+                                id: <span className="font-mono">{selectedField.id}</span> / type:{" "}
+                                <span className="font-mono">{selectedField.type}</span>
                             </div>
 
                             <Input
                                 label="name（提交 key）"
-                                value={selected.name}
-                                onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { name: v } })}
+                                value={selectedField.name}
+                                onChange={(v) =>
+                                    dispatch({
+                                        type: "UPDATE_FIELD",
+                                        rowId: selectedRow.id,
+                                        colId: selectedCol.id,
+                                        fieldId: selectedField.id,
+                                        patch: { name: v },
+                                    })
+                                }
                             />
 
-                            {/* divider/section 的 label 逻辑不同 */}
-                            {selected.type !== "divider" && selected.type !== "section" ? (
+                            {selectedField.type !== "divider" && selectedField.type !== "section" ? (
                                 <Input
                                     label="label"
-                                    value={selected.label ?? ""}
-                                    onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { label: v } })}
+                                    value={selectedField.label ?? ""}
+                                    onChange={(v) =>
+                                        dispatch({
+                                            type: "UPDATE_FIELD",
+                                            rowId: selectedRow.id,
+                                            colId: selectedCol.id,
+                                            fieldId: selectedField.id,
+                                            patch: { label: v },
+                                        })
+                                    }
                                 />
                             ) : null}
 
-                            {selected.type === "section" ? (
+                            {selectedField.type === "section" ? (
                                 <>
                                     <Input
                                         label="分组标题"
-                                        value={(selected as any).title ?? ""}
-                                        onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { title: v } as any })}
+                                        value={(selectedField as any).title ?? ""}
+                                        onChange={(v) =>
+                                            dispatch({
+                                                type: "UPDATE_FIELD",
+                                                rowId: selectedRow.id,
+                                                colId: selectedCol.id,
+                                                fieldId: selectedField.id,
+                                                patch: { title: v } as any,
+                                            })
+                                        }
                                     />
                                     <Textarea
                                         label="分组描述"
-                                        value={(selected as any).description ?? ""}
+                                        value={(selectedField as any).description ?? ""}
                                         onChange={(v) =>
-                                            dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { description: v } as any })
+                                            dispatch({
+                                                type: "UPDATE_FIELD",
+                                                rowId: selectedRow.id,
+                                                colId: selectedCol.id,
+                                                fieldId: selectedField.id,
+                                                patch: { description: v } as any,
+                                            })
                                         }
                                     />
                                 </>
@@ -172,39 +306,35 @@ export function PropertyEditor() {
 
                             <Textarea
                                 label="helpText"
-                                value={selected.helpText ?? ""}
-                                onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { helpText: v } })}
+                                value={selectedField.helpText ?? ""}
+                                onChange={(v) =>
+                                    dispatch({
+                                        type: "UPDATE_FIELD",
+                                        rowId: selectedRow.id,
+                                        colId: selectedCol.id,
+                                        fieldId: selectedField.id,
+                                        patch: { helpText: v },
+                                    })
+                                }
                             />
 
-                            <label className="block">
-                                <div className="text-xs font-semibold text-slate-600 mb-1">colSpan（1-12）</div>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={12}
-                                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-200"
-                                    value={selected.colSpan ?? 12}
-                                    onChange={(e) =>
+                            {"placeholder" in selectedField ? (
+                                <Input
+                                    label="placeholder"
+                                    value={(selectedField as any).placeholder ?? ""}
+                                    onChange={(v) =>
                                         dispatch({
                                             type: "UPDATE_FIELD",
-                                            fieldId: selected.id,
-                                            patch: { colSpan: Number(e.target.value || 12) } as any,
+                                            rowId: selectedRow.id,
+                                            colId: selectedCol.id,
+                                            fieldId: selectedField.id,
+                                            patch: { placeholder: v } as any,
                                         })
                                     }
                                 />
-                            </label>
-
-                            {/* placeholder */}
-                            {"placeholder" in selected ? (
-                                <Input
-                                    label="placeholder"
-                                    value={(selected as any).placeholder ?? ""}
-                                    onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { placeholder: v } as any })}
-                                />
                             ) : null}
 
-                            {/* rows */}
-                            {"rows" in selected ? (
+                            {"rows" in selectedField ? (
                                 <label className="block">
                                     <div className="text-xs font-semibold text-slate-600 mb-1">rows</div>
                                     <input
@@ -212,11 +342,13 @@ export function PropertyEditor() {
                                         min={1}
                                         max={20}
                                         className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-200"
-                                        value={(selected as any).rows ?? 4}
+                                        value={(selectedField as any).rows ?? 4}
                                         onChange={(e) =>
                                             dispatch({
                                                 type: "UPDATE_FIELD",
-                                                fieldId: selected.id,
+                                                rowId: selectedRow.id,
+                                                colId: selectedCol.id,
+                                                fieldId: selectedField.id,
                                                 patch: { rows: Number(e.target.value || 4) } as any,
                                             })
                                         }
@@ -224,8 +356,7 @@ export function PropertyEditor() {
                                 </label>
                             ) : null}
 
-                            {/* number */}
-                            {selected.type === "number" ? (
+                            {selectedField.type === "number" ? (
                                 <div className="grid grid-cols-3 gap-2">
                                     {(["min", "max", "step"] as const).map((k) => (
                                         <label key={k} className="block">
@@ -233,10 +364,16 @@ export function PropertyEditor() {
                                             <input
                                                 type="number"
                                                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-200"
-                                                value={(selected as any)[k] ?? ""}
+                                                value={(selectedField as any)[k] ?? ""}
                                                 onChange={(e) => {
                                                     const v = e.target.value === "" ? undefined : Number(e.target.value);
-                                                    dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { [k]: v } as any });
+                                                    dispatch({
+                                                        type: "UPDATE_FIELD",
+                                                        rowId: selectedRow.id,
+                                                        colId: selectedCol.id,
+                                                        fieldId: selectedField.id,
+                                                        patch: { [k]: v } as any,
+                                                    });
                                                 }}
                                             />
                                         </label>
@@ -247,22 +384,46 @@ export function PropertyEditor() {
                             <div className="grid grid-cols-1 gap-2">
                                 <Switch
                                     label="required"
-                                    checked={!!selected.required}
-                                    onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { required: v } })}
+                                    checked={!!selectedField.required}
+                                    onChange={(v) =>
+                                        dispatch({
+                                            type: "UPDATE_FIELD",
+                                            rowId: selectedRow.id,
+                                            colId: selectedCol.id,
+                                            fieldId: selectedField.id,
+                                            patch: { required: v },
+                                        })
+                                    }
                                 />
                                 <Switch
                                     label="disabled"
-                                    checked={!!selected.disabled}
-                                    onChange={(v) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { disabled: v } })}
+                                    checked={!!selectedField.disabled}
+                                    onChange={(v) =>
+                                        dispatch({
+                                            type: "UPDATE_FIELD",
+                                            rowId: selectedRow.id,
+                                            colId: selectedCol.id,
+                                            fieldId: selectedField.id,
+                                            patch: { disabled: v },
+                                        })
+                                    }
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {(selected.type === "select" || selected.type === "radio") && (
+                    {(selectedField.type === "select" || selectedField.type === "radio") && (
                         <OptionsEditor
-                            options={(selected as any).options ?? []}
-                            onChange={(opts) => dispatch({ type: "UPDATE_FIELD", fieldId: selected.id, patch: { options: opts } as any })}
+                            options={(selectedField as any).options ?? []}
+                            onChange={(opts) =>
+                                dispatch({
+                                    type: "UPDATE_FIELD",
+                                    rowId: selectedRow.id,
+                                    colId: selectedCol.id,
+                                    fieldId: selectedField.id,
+                                    patch: { options: opts } as any,
+                                })
+                            }
                         />
                     )}
 
@@ -271,12 +432,21 @@ export function PropertyEditor() {
                             "w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700",
                             "hover:bg-red-100"
                         )}
-                        onClick={() => dispatch({ type: "DELETE_FIELD", fieldId: selected.id })}
+                        onClick={() =>
+                            dispatch({ type: "DELETE_FIELD", rowId: selectedRow.id, colId: selectedCol.id, fieldId: selectedField.id })
+                        }
                     >
                         删除该字段
                     </button>
                 </div>
-            )}
+            ) : null}
+
+            {/* 空态 */}
+            {state.selected.kind === "form" ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+                    选择 Row / Col / 字段以编辑属性
+                </div>
+            ) : null}
         </div>
     );
 }

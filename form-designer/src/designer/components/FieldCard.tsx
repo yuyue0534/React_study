@@ -3,19 +3,31 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldSchema } from "../../schema/types";
 import { cn } from "../../utils/classnames";
+import { usePermissions } from "../../auth/RoleContext";
+
 
 export function FieldCard({
+    rowId,
+    colId,
     field,
     selected,
     onSelect,
     onDelete,
 }: {
+    rowId: string;
+    colId: string;
     field: FieldSchema;
     selected: boolean;
     onSelect: () => void;
     onDelete: () => void;
 }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id });
+    const perms = usePermissions();
+    // 原本：useSortable({ id: field.id })
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: `field:${rowId}:${colId}:${field.id}`,
+        disabled: !perms.canReorder,
+    });
+
 
     const style: React.CSSProperties = {
         transform: CSS.Transform.toString(transform),
@@ -38,7 +50,12 @@ export function FieldCard({
                 selected ? "border-slate-900" : "border-slate-200",
                 isDragging && "opacity-70"
             )}
-            onClick={onSelect}
+            onClick={(e) => {
+                // 防止冒泡到 Col 容器，导致选中被覆盖成 Col
+                e.stopPropagation()
+                onSelect()
+            }
+            }
         >
             <div className="flex items-start justify-between gap-2">
                 <div>
@@ -51,7 +68,7 @@ export function FieldCard({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
+                    {perms.canDelete && (<button
                         className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -59,9 +76,9 @@ export function FieldCard({
                         }}
                     >
                         删除
-                    </button>
+                    </button>)}
 
-                    <button
+                    {perms.canReorder && (<button
                         className="cursor-grab rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50 active:cursor-grabbing"
                         onClick={(e) => e.stopPropagation()}
                         {...attributes}
@@ -69,11 +86,11 @@ export function FieldCard({
                         title="拖拽排序"
                     >
                         拖拽
-                    </button>
+                    </button>)}
                 </div>
             </div>
 
             {field.helpText ? <div className="mt-2 text-xs text-slate-600">提示：{field.helpText}</div> : null}
-        </div>
+        </div >
     );
 }

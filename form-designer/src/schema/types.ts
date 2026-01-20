@@ -11,17 +11,15 @@ export type FieldType =
 
 export type OptionItem = { label: string; value: string };
 
+// ---------- Field ----------
 export type BaseField = {
     id: string;
     type: FieldType;
-    name: string;           // 提交 key（建议唯一）
+    name: string; // 提交 key（建议唯一）
     label?: string;
     helpText?: string;
     required?: boolean;
     disabled?: boolean;
-
-    // 简单布局：12 栅格（先做够用）
-    colSpan?: number;       // 1-12
 };
 
 export type InputField = BaseField & {
@@ -90,9 +88,23 @@ export type FieldSchema =
     | DividerField
     | SectionField;
 
+// ---------- Layout Containers ----------
+export type ColSchema = {
+    id: string;
+    type: "col";
+    span: number; // 1-12
+    children: FieldSchema[];
+};
+
+export type RowSchema = {
+    id: string;
+    type: "row";
+    columns: ColSchema[];
+};
+
 export type FormSchema = {
     schemaVersion: number;
     title: string;
     description?: string;
-    fields: FieldSchema[];
+    rows: RowSchema[];
 };

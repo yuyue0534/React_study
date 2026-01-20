@@ -9,10 +9,18 @@ export function FormRenderer({ schema }: { schema: FormSchema }) {
                 {schema.description ? <div className="text-sm text-slate-600 mt-1">{schema.description}</div> : null}
             </div>
 
-            <div className="grid grid-cols-12 gap-3">
-                {schema.fields.map((f) => (
-                    <div key={f.id} className={`col-span-${Math.min(12, Math.max(1, f.colSpan ?? 12))}`}>
-                        <FieldView field={f} />
+            <div className="space-y-4">
+                {schema.rows.map((row) => (
+                    <div key={row.id} className="grid grid-cols-12 gap-3">
+                        {row.columns.map((col) => (
+                            <div key={col.id} className={`col-span-${col.span}`}>
+                                <div className="space-y-3">
+                                    {col.children.map((f) => (
+                                        <FieldView key={f.id} field={f} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ))}
             </div>

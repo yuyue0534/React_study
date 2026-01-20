@@ -1,11 +1,11 @@
-import type { FormSchema, FieldSchema, FieldType } from "./types";
+import type { ColSchema, FieldSchema, FieldType, FormSchema, RowSchema } from "./types";
 import { uid } from "../utils/id";
 
 export const defaultFormSchema: FormSchema = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     title: "未命名表单",
     description: "",
-    fields: [],
+    rows: [],
 };
 
 export function createDefaultField(type: FieldType): FieldSchema {
@@ -17,7 +17,6 @@ export function createDefaultField(type: FieldType): FieldSchema {
         label: "未命名字段",
         required: false,
         disabled: false,
-        colSpan: 12,
     };
 
     switch (type) {
@@ -60,4 +59,24 @@ export function createDefaultField(type: FieldType): FieldSchema {
         default:
             return base as FieldSchema;
     }
+}
+
+export function createDefaultCol(span = 12): ColSchema {
+    return {
+        id: uid(),
+        type: "col",
+        span,
+        children: [],
+    };
+}
+
+export function createDefaultRow(): RowSchema {
+    // 默认两列（7/5）更常见；你也可以改成 6/6
+    const left = createDefaultCol(7);
+    const right = createDefaultCol(5);
+    return {
+        id: uid(),
+        type: "row",
+        columns: [left, right],
+    };
 }
