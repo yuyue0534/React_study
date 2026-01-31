@@ -1,0 +1,28 @@
+import Login from '../pages/Login'
+import Dashboard from '../pages/Dashboard'
+import MainLayout from '../components/layout/MainLayout'
+import { useAuthStore } from '../stores/auth.store'
+
+const RequireAuth = ({ children }) => {
+  const token = useAuthStore(s => s.token)
+  if (!token) {
+    window.location.href = '/login'
+    return null
+  }
+  return children
+}
+
+export default [
+  { path: '/login', element: <Login /> },
+  {
+    path: '/',
+    element: (
+      <RequireAuth>
+        <MainLayout />
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <Dashboard /> }
+    ]
+  }
+]
