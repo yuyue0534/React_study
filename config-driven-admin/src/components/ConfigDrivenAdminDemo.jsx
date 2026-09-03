@@ -137,6 +137,118 @@ const dslConfig = {
         },
       },
     },
+    // ---- 下面三个是这一步新增的：iframe / custom / slider ----
+    {
+      key: "help",
+      name: "帮助中心",
+      menuType: "module",
+      moduleType: "iframe",
+      iframeConfig: {
+        path: "https://docs.example.com/help",
+      },
+    },
+    {
+      key: "workspace",
+      name: "工作台",
+      menuType: "module",
+      moduleType: "custom",
+      customConfig: {
+        path: "/workspace",
+      },
+    },
+    {
+      key: "data",
+      name: "数据分析",
+      menuType: "module",
+      moduleType: "slider",
+      // slider 的侧边栏是一棵独立的子菜单树，节点形状跟顶层 menu 完全一样，
+      // 所以能塞 custom / iframe / group 套 schema —— 复用的是同一套节点结构。
+      sliderConfig: {
+        menu: [
+          {
+            key: "analysis",
+            name: "电商罗盘",
+            menuType: "module",
+            moduleType: "custom",
+            customConfig: { path: "/data/analysis" },
+          },
+          {
+            key: "slider-search",
+            name: "信息查询",
+            menuType: "module",
+            moduleType: "iframe",
+            iframeConfig: { path: "https://search.example.com" },
+          },
+          {
+            key: "categories",
+            name: "分类数据",
+            menuType: "group",
+            subMenu: [
+              {
+                key: "category_l1",
+                name: "一级分类",
+                menuType: "module",
+                moduleType: "schema",
+                schemaConfig: {
+                  api: "/api/proj/category_l1",
+                  schema: {
+                    type: "object",
+                    properties: {
+                      category_id: { type: "string", label: "分类ID", tableOption: { width: 120 } },
+                      category_name: {
+                        type: "string",
+                        label: "分类名称",
+                        tableOption: { width: 200 },
+                        searchOption: { comType: "input", placeholder: "搜索分类名称" },
+                        formOption: { comType: "input", required: true },
+                      },
+                      sort: { type: "number", label: "排序", tableOption: { width: 100 }, formOption: { comType: "input" } },
+                    },
+                  },
+                  tableConfig: {
+                    headerButtons: [{ label: "新增分类", eventKey: "showComponent", type: "primary" }],
+                    rowButtons: [
+                      { label: "修改", eventKey: "showComponent", type: "warning" },
+                      { label: "删除", eventKey: "remove", type: "danger", eventOption: { params: { category_id: "schema::category_id" } } },
+                    ],
+                  },
+                },
+              },
+              {
+                key: "category_l2",
+                name: "二级分类",
+                menuType: "module",
+                moduleType: "schema",
+                schemaConfig: {
+                  api: "/api/proj/category_l2",
+                  schema: {
+                    type: "object",
+                    properties: {
+                      category_id: { type: "string", label: "分类ID", tableOption: { width: 120 } },
+                      parent_name: { type: "string", label: "所属一级分类", tableOption: { width: 160 } },
+                      category_name: {
+                        type: "string",
+                        label: "分类名称",
+                        tableOption: { width: 180 },
+                        searchOption: { comType: "input", placeholder: "搜索分类名称" },
+                        formOption: { comType: "input", required: true },
+                      },
+                    },
+                  },
+                  tableConfig: {
+                    headerButtons: [{ label: "新增分类", eventKey: "showComponent", type: "primary" }],
+                    rowButtons: [
+                      { label: "修改", eventKey: "showComponent", type: "warning" },
+                      { label: "删除", eventKey: "remove", type: "danger", eventOption: { params: { category_id: "schema::category_id" } } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
   ],
 };
 
@@ -263,6 +375,15 @@ const seedData = {
     { order_id: "ORD-88291", buyer: "陈小雨", amount: 199, status: "待发货", create_time: "2026-08-20 16:40" },
     { order_id: "ORD-88305", buyer: "林墨", amount: 39.9, status: "已发货", create_time: "2026-08-22 09:11" },
     { order_id: "ORD-88312", buyer: "周意", amount: 899, status: "已完成", create_time: "2026-08-25 19:02" },
+  ],
+  "/api/proj/category_l1": [
+    { category_id: "C001", category_name: "数码电器", sort: 1 },
+    { category_id: "C002", category_name: "家居生活", sort: 2 },
+  ],
+  "/api/proj/category_l2": [
+    { category_id: "C001-01", parent_name: "数码电器", category_name: "耳机音箱" },
+    { category_id: "C001-02", parent_name: "数码电器", category_name: "键盘鼠标" },
+    { category_id: "C002-01", parent_name: "家居生活", category_name: "厨房用品" },
   ],
 };
 
@@ -612,13 +733,171 @@ function SchemaView({ node, log }) {
 }
 
 /* ============================================================================
+ * IframeView —— moduleType: 'iframe' 的渲染器
+ * ----------------------------------------------------------------------------
+ * 配置里只有一个 path，交给 <iframe> 就完事。这里为了不依赖外部网络能否加载
+ * （沙箱环境里跨域 iframe 大概率会被目标站点的 X-Frame-Options 挡掉），
+ * 用一个"浏览器地址栏"式的壳子模拟外部页面被嵌入的效果，实际项目里
+ * 把占位内容换成 <iframe src={path} style={{width:'100%',height:'100%'}} /> 即可。
+ * ========================================================================== */
+
+function IframeView({ node, log }) {
+  const { path } = node.iframeConfig;
+
+  useEffect(() => {
+    log(`加载 iframe: ${path}`, "req");
+  }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ background: C.panelAlt, borderBottom: `1px solid ${C.border}` }}>
+        <div className="flex gap-1.5">
+          {["#f16063", "#f0b429", "#4fd17c"].map((c) => (
+            <span key={c} style={{ width: 9, height: 9, borderRadius: 999, background: c, opacity: 0.7, display: "inline-block" }} />
+          ))}
+        </div>
+        <div className="text-xs flex-1 px-2.5 py-1 rounded truncate" style={{ background: C.bg, color: C.muted, ...mono }}>
+          {path}
+        </div>
+      </div>
+      <div style={{ height: 340, background: "#f4f5f7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 13, color: "#6b7280", ...sans }}>iframeConfig.path 指向的外部页面会渲染在这里</div>
+          <div style={{ fontSize: 11, color: "#9aa1af", marginTop: 6, ...mono }}>{`<iframe src="${path}" />`}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * CustomView —— moduleType: 'custom' 的渲染器
+ * ----------------------------------------------------------------------------
+ * custom 类型是 DSL 覆盖不到的场景的逃生舱：DSL 层只登记一个路由入口，
+ * 具体页面由业务方在对应路由自己写组件实现，解析器不管这部分渲染逻辑。
+ * ========================================================================== */
+
+function CustomView({ node, log }) {
+  useEffect(() => {
+    log(`custom 入口命中: ${node.customConfig.path}`, "info");
+  }, [node.customConfig.path]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="rounded-lg p-10 text-center" style={{ border: `1px dashed ${C.border}`, background: C.panel }}>
+      <div style={{ color: C.text, fontSize: 14, fontWeight: 600 }}>自定义页面入口</div>
+      <div className="mt-2 text-xs" style={{ color: C.mutedDim, ...mono }}>customConfig.path: {node.customConfig.path}</div>
+      <div className="mt-3 text-xs mx-auto" style={{ color: C.muted, maxWidth: 360, lineHeight: 1.7, ...sans }}>
+        custom 类型只在 DSL 层声明一个入口，具体渲染逻辑由业务方在对应路由自己实现，
+        不受解析器管辖——留给"配置驱动覆盖不到的场景"用。
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * SliderView —— moduleType: 'slider' 的渲染器
+ * ----------------------------------------------------------------------------
+ * sliderConfig.menu 是一棵独立的子菜单树，节点形状跟顶层 menu 完全一样
+ * （都是 { key, name, menuType, moduleType, xxxConfig }），
+ * 所以子菜单里能再塞 custom / iframe，甚至 group 套 schema，
+ * 靠的就是"侧边栏选中的节点 -> ModuleRenderer 统一分发"这条路复用顶层同一套逻辑。
+ * ========================================================================== */
+
+function findFirstModuleNode(tree) {
+  for (const node of tree) {
+    if (node.menuType === "group" && node.subMenu) {
+      const found = findFirstModuleNode(node.subMenu);
+      if (found) return found;
+    } else if (node.menuType === "module") {
+      return node;
+    }
+  }
+  return null;
+}
+
+function SliderTreeMenu({ tree, activeKey, onSelect, depth = 0 }) {
+  return (
+    <>
+      {tree.map((node) => {
+        if (node.menuType === "group") {
+          return (
+            <div key={node.key}>
+              <div
+                className="px-3 py-2 text-[11px] font-medium"
+                style={{ color: C.mutedDim, paddingLeft: 12 + depth * 12, ...sans }}
+              >
+                {node.name}
+              </div>
+              <SliderTreeMenu tree={node.subMenu} activeKey={activeKey} onSelect={onSelect} depth={depth + 1} />
+            </div>
+          );
+        }
+        const active = activeKey === node.key;
+        return (
+          <button
+            key={node.key}
+            onClick={() => onSelect(node)}
+            className="w-full text-left px-3 py-2 text-sm transition-colors"
+            style={{
+              paddingLeft: 12 + depth * 12,
+              color: active ? C.accent : C.muted,
+              background: active ? C.panelAlt : "transparent",
+              borderLeft: `2px solid ${active ? C.accent : "transparent"}`,
+            }}
+          >
+            {node.name}
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+function SliderView({ node, log }) {
+  const tree = node.sliderConfig.menu;
+  const [active, setActive] = useState(() => findFirstModuleNode(tree));
+
+  return (
+    <div className="flex rounded-lg overflow-hidden" style={{ minHeight: 420, border: `1px solid ${C.border}` }}>
+      <div className="w-44 shrink-0 py-2" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
+        <SliderTreeMenu tree={tree} activeKey={active?.key} onSelect={setActive} />
+      </div>
+      <div className="flex-1 p-4" style={{ background: C.bg }}>
+        {active ? <ModuleRenderer node={active} log={log} /> : <div style={{ color: C.mutedDim }}>该分组下暂无可渲染模块</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
  * 顶层：菜单树 -> 路由 -> moduleType 分发
+ * ----------------------------------------------------------------------------
+ * 新增 moduleType 只需要往这个注册表里加一条，不用改解析器和渲染入口。
  * ========================================================================== */
 
 const moduleRegistry = {
   schema: SchemaView,
-  // iframe / slider / custom 留到下一步再补充注册
+  iframe: IframeView,
+  custom: CustomView,
+  slider: SliderView,
 };
+
+function ModuleRenderer({ node, log }) {
+  const Component = moduleRegistry[node.moduleType];
+  if (!Component) {
+    return (
+      <div className="rounded-lg p-4 text-sm" style={{ background: C.dangerDim, color: C.danger, border: `1px solid ${C.danger}33` }}>
+        未注册的 moduleType: {node.moduleType}
+      </div>
+    );
+  }
+  return <Component node={node} log={log} />;
+}
+
+// 根据 moduleType 取出对应的 xxxConfig，供右侧配置面板展示
+function getNodeConfig(node) {
+  return node[`${node.moduleType}Config`];
+}
 
 export default function ConfigDrivenAdminDemo() {
   const routes = useMemo(() => menuTreeToRoutes(dslConfig.menu), []);
@@ -636,7 +915,6 @@ export default function ConfigDrivenAdminDemo() {
   }, [logs]);
 
   const activeRoute = findMenuItem(dslConfig.menu, (n) => n.key === activeKey) ? routes.find((r) => r.key === activeKey) : routes[0];
-  const ActiveComponent = moduleRegistry[activeRoute.moduleType];
 
   return (
     <div className="w-full min-h-screen flex" style={{ background: C.bg, ...sans }}>
@@ -686,16 +964,16 @@ export default function ConfigDrivenAdminDemo() {
 
         <div className="flex-1 flex min-h-0">
           <div className="flex-1 overflow-auto p-6">
-            <ActiveComponent node={activeRoute.node} log={log} />
+            <ModuleRenderer node={activeRoute.node} log={log} />
           </div>
 
           {showConfig && (
             <div className="w-80 shrink-0 flex flex-col" style={{ borderLeft: `1px solid ${C.border}`, background: C.panel }}>
               <div className="flex items-center gap-1.5 px-4 py-3 text-xs font-medium" style={{ color: C.muted, borderBottom: `1px solid ${C.border}` }}>
-                <Braces size={13} /> schemaConfig（驱动上面渲染的原始配置）
+                <Braces size={13} /> {activeRoute.moduleType}Config（驱动上面渲染的原始配置）
               </div>
               <div className="flex-1 overflow-auto px-4 py-3 text-[11px] leading-relaxed" style={{ ...mono }}>
-                <JsonView value={activeRoute.node.schemaConfig} />
+                <JsonView value={getNodeConfig(activeRoute.node)} />
               </div>
               <div className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium" style={{ color: C.muted, borderTop: `1px solid ${C.border}` }}>
                 <Terminal size={13} /> 运行时请求日志
